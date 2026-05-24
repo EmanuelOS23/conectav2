@@ -52,8 +52,6 @@ conecta-sus/
 ### 1. Clone / abra o projeto no VS Code
 
 ```bash
-# Se ainda não tem a pasta:
-cd Desktop
 # Abra a pasta conecta-sus no VS Code
 code conecta-sus
 ```
