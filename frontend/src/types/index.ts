@@ -1,0 +1,106 @@
+// ============================================================
+// CONECTA SUS — Tipos TypeScript baseados no UML
+// ============================================================
+
+export interface Usuario {
+  id: string;
+  nome: string;
+  cpf: string;
+  telefone: string;
+  email: string;
+  tipoUsuario: "paciente" | "administrador" | "profissionalSaude";
+  criadoEm?: string;
+}
+
+export interface Paciente extends Usuario {
+  tipoUsuario: "paciente";
+  meusAgendamentos?: Agendamento[];
+}
+
+export interface Administrador extends Usuario {
+  tipoUsuario: "administrador";
+  nivelAcesso: string;
+}
+
+export interface ProfissionalSaude extends Usuario {
+  tipoUsuario: "profissionalSaude";
+  registroProfissional: string;
+  especialidadeId: string;
+  agendas?: Agenda[];
+  foto?: string;
+  bio?: string;
+}
+
+export interface UnidadeSaude {
+  id: string;
+  nome: string;
+  endereco: string;
+  telefone: string;
+  especialidadeIds: string[];
+  latitude?: number;
+  longitude?: number;
+  distancia?: number; // km, calculado via geolocalização
+}
+
+export interface Especialidade {
+  id: string;
+  nome: string;
+  descricao: string;
+  icone?: string;
+}
+
+export interface Agenda {
+  id: string;
+  profissionalId: string;
+  unidadeId: string;
+  data: string; // ISO date string
+  horarios: Horario[];
+}
+
+export interface Horario {
+  hora: string; // "09:00", "10:00"...
+  disponivel: boolean;
+}
+
+export interface Agendamento {
+  id: string;
+  pacienteId: string;
+  profissionalId: string;
+  unidadeId: string;
+  especialidadeId: string;
+  data: string;
+  horario: string;
+  status: "pendente" | "confirmado" | "cancelado" | "concluido";
+  criadoEm: string;
+  primeivaConsulta?: boolean;
+  tipoVisita?: "presencial" | "telemedicina";
+}
+
+// DTO para criação de agendamento
+export interface CriarAgendamentoDTO {
+  profissionalId: string;
+  unidadeId: string;
+  especialidadeId: string;
+  data: string;
+  horario: string;
+  primeiraConsulta: boolean;
+  tipoVisita: "presencial" | "telemedicina";
+}
+
+// Tipos auxiliares de UI
+export type StatusAgendamento = Agendamento["status"];
+
+export type TipoUsuario = Usuario["tipoUsuario"];
+
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  error?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}

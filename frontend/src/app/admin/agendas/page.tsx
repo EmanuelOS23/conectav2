@@ -1,0 +1,102 @@
+"use client";
+import { useEffect, useState } from "react";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { DashboardLayout, Sidebar } from "@/components/layout";
+import { Card, Button, Select, ErrorMessage } from "@/components/ui";
+import { profissionalService, agendaService } from "@/services";
+import type { ProfissionalSaude, Horario } from "@/types";
+import { cn } from "@/utils";
+
+const ADMIN_LINKS = [
+  { href: "/admin",                label: "Dashboard",         icon: "📊" },
+  { href: "/admin/unidades",       label: "Unidades de Saúde", icon: "🏥" },
+  { href: "/admin/especialidades", label: "Especialidades",    icon: "🩺" },
+  { href: "/admin/profissionais",  label: "Profissionais",     icon: "👨‍⚕️" },
+  { href: "/admin/agendas",        label: "Agendas",           icon: "📅" },
+];
+
+const HORAS = ["07:00","08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
+
+export default function AdminAgendasPage() {
+  const [profissionais, setProfissionais] = useState<ProfissionalSaude[]>([]);
+  const [profId, setProfId] = useState("");
+  const [data, setData]     = useState("");
+  const [horarios, setHorarios] = useState<Horario[]>(
+    HORAS.map((hora) => ({ hora, disponivel: true }))
+  );
+  const [loading, setLoading] = useState(false);
+  const [sucesso, setSucesso] = useState(false);
+  const [erro, setErro]       = useState<string | null>(null);
+
+  useEffect(() => {
+    profissionalService.getProfissionais().then(setProfissionais).catch(() => {});
+  }, []);
+
+  function toggleHorario(hora: string) {
+    setHorarios((hs) => hs.map((h) => h.hora === hora ? { ...h, disponivel: !h.disponivel } : h));
+  }
+
+  async function handleSalvar() {
+    if (!profId || !data) { setErro("Selecione profissional e data."); return; }
+    setLoading(true); setErro(null); setSucesso(false);
+    try {
+      await agendaService.organizarHorarios("novo", { profissionalId: profId, data, horarios });
+      setSucesso(true);
+    } catch (err: unknown) {
+      setErro(err instanceof Error ? err.message : "Erro ao salvar.");
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <>
+      <Header />
+      <DashboardLayout sidebar={<Sidebar links={ADMIN_LINKS} />}>
+        <div className="flex flex-col gap-6">
+          <h1 className="font-poppins text-2xl font-bold text-brand-800">Organizar Agendas</h1>
+          {erro    && <ErrorMessage message={erro} />}
+          {sucesso && <div className="bg-green-50 border border-green-200 text-green-700 rounded-card px-4 py-3 text-sm">✅ Agenda salva!</div>}
+
+          <Card>
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <Select label="Profissional" value={profId} onChange={(e) => setProfId(e.target.value)}
+                placeholder="Selecione o profissional"
+                options={profissionais.map((p) => ({ value: p.id, label: p.nome }))}
+                className="flex-1" />
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold text-neutral-700">Data</label>
+                <input type="date" value={data} onChange={(e) => setData(e.target.value)}
+                  className="border border-neutral-300 rounded-input px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700" />
+              </div>
+            </div>
+
+            <p className="text-sm font-semibold text-neutral-700 mb-3">
+              Clique nos horários para ativar/desativar:
+            </p>
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-6">
+              {horarios.map(({ hora, disponivel }) => (
+                <button
+                  key={hora}
+                  onClick={() => toggleHorario(hora)}
+                  className={cn(
+                    "py-2 px-3 rounded-card border text-sm font-semibold transition-all focus-visible:outline-brand-700",
+                    disponivel
+                      ? "bg-brand-700 border-brand-700 text-white"
+                      : "bg-neutral-100 border-neutral-200 text-neutral-400"
+                  )}
+                  aria-pressed={disponivel}
+                >
+                  {hora}
+                </button>
+              ))}
+            </div>
+            <Button fullWidth loading={loading} onClick={handleSalvar}>
+              💾 Salvar Agenda
+            </Button>
+          </Card>
+        </div>
+      </DashboardLayout>
+      <Footer />
+    </>
+  );
+}
