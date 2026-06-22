@@ -2,22 +2,165 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
+type HeaderLink = {
+  href: string;
+  label: string;
+};
+
 export function Header() {
+  const router = useRouter();
+  const pathname = usePathname();
   const { user, sair } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const isHome = pathname === "/";
+  const isMedicoArea = pathname.startsWith("/medico");
+  const isPacienteArea =
+    pathname.startsWith("/dashboard") || pathname.startsWith("/agendamento");
+  const isLoginPaciente = pathname === "/login";
+  const isLoginMedico = pathname === "/medico/login";
+
   const medicoHref =
     user?.tipoUsuario === "profissionalSaude" ? "/medico" : "/medico/login";
+
+  const pageInfo = useMemo(() => {
+    if (pathname === "/") {
+      return {
+        title: "Conecta Sus+",
+        subtitle: "Agendamento de consultas",
+      };
+    }
+
+    if (pathname === "/login") {
+      return {
+        title: "Login do Paciente",
+        subtitle: "Acesse sua conta para agendar consultas",
+      };
+    }
+
+    if (pathname === "/medico/login") {
+      return {
+        title: "Login do Médico",
+        subtitle: "Acesse sua conta para visualizar consultas",
+      };
+    }
+
+    if (pathname === "/dashboard") {
+      return {
+        title: "Meu Painel",
+        subtitle: "Gerencie suas consultas",
+      };
+    }
+
+    if (pathname === "/dashboard/historico") {
+      return {
+        title: "Histórico",
+        subtitle: "Consultas anteriores e canceladas",
+      };
+    }
+
+    if (pathname === "/dashboard/perfil") {
+      return {
+        title: "Meu Perfil",
+        subtitle: "Dados da sua conta",
+      };
+    }
+
+    if (pathname.startsWith("/agendamento")) {
+      return {
+        title: "Agendamento",
+        subtitle: "Escolha especialidade, unidade e horário",
+      };
+    }
+
+    if (pathname === "/medico") {
+      return {
+        title: "Minha Agenda",
+        subtitle: "Pacientes agendados por data",
+      };
+    }
+
+    if (pathname === "/medico/consultas") {
+      return {
+        title: "Consultas",
+        subtitle: "Acompanhe seus atendimentos",
+      };
+    }
+
+    if (pathname === "/medico/horarios") {
+      return {
+        title: "Meus Horários",
+        subtitle: "Grade de disponibilidade",
+      };
+    }
+
+    return {
+      title: "Conecta Sus+",
+      subtitle: "Agendamento de consultas",
+    };
+  }, [pathname]);
+
+  const menuLinks = useMemo<HeaderLink[]>(() => {
+    if (isMedicoArea) {
+      return [
+        { href: "/medico", label: "Minha Agenda" },
+        { href: "/medico/consultas", label: "Consultas" },
+        { href: "/medico/horarios", label: "Meus Horários" },
+        { href: "/", label: "Início" },
+      ];
+    }
+
+    if (isPacienteArea) {
+      return [
+        { href: "/dashboard", label: "Meu Painel" },
+        { href: "/agendamento/especialidade", label: "Agendar Consulta" },
+        { href: "/dashboard/historico", label: "Histórico" },
+        { href: "/dashboard/perfil", label: "Meu Perfil" },
+        { href: "/", label: "Início" },
+      ];
+    }
+
+    return [
+      { href: "/", label: "Início" },
+      { href: "/agendamento/especialidade", label: "Agendar Consulta" },
+      { href: "/login", label: "Login do Paciente" },
+      { href: medicoHref, label: "Área do Médico" },
+    ];
+  }, [isMedicoArea, isPacienteArea, medicoHref]);
+
+  function handleBack() {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    if (isMedicoArea) {
+      router.push("/medico");
+      return;
+    }
+
+    if (isPacienteArea) {
+      router.push("/dashboard");
+      return;
+    }
+
+    router.push("/");
+  }
+
+  function isActiveLink(href: string) {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
 
   return (
     <header className="bg-white shadow-header sticky top-0 z-40" role="banner">
       {/* Barra superior */}
       <div className="h-[66px] bg-white border-b border-neutral-100">
         <div className="container-app h-full flex items-center justify-between">
-          {/* Logo + Governo Federal */}
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center no-underline">
               <Image
@@ -35,11 +178,14 @@ export function Header() {
             <span className="text-sm text-neutral-800">Governo Federal</span>
           </div>
 
-          {/* Área direita */}
           <div className="flex items-center gap-5">
             <Link
               href={medicoHref}
-              className="hidden sm:block text-[12px] text-brand-700 underline underline-offset-2"
+              className={`hidden sm:block text-[12px] underline underline-offset-2 ${
+                isMedicoArea
+                  ? "text-brand-800 font-bold"
+                  : "text-brand-700"
+              }`}
             >
               Área do médico
             </Link>
@@ -75,7 +221,11 @@ export function Header() {
             ) : (
               <Link
                 href="/login"
-                className="h-[30px] px-5 rounded-full bg-brand-700 text-white text-xs font-bold no-underline flex items-center gap-2 hover:bg-brand-800 transition-colors"
+                className={`h-[30px] px-5 rounded-full text-xs font-bold no-underline flex items-center gap-2 transition-colors ${
+                  isLoginPaciente
+                    ? "bg-brand-800 text-white"
+                    : "bg-brand-700 text-white hover:bg-brand-800"
+                }`}
               >
                 <UserIcon className="w-3.5 h-3.5 text-white" />
                 Entrar com gov.br
@@ -86,13 +236,24 @@ export function Header() {
       </div>
 
       {/* Barra inferior */}
-      <div className="h-[58px] bg-white border-b border-neutral-100">
-        <div className="container-app h-full flex items-center justify-between gap-6">
-          {/* Menu + título */}
-          <div className="flex items-center gap-4">
+      <div className="min-h-[58px] bg-white border-b border-neutral-100">
+        <div className="container-app min-h-[58px] flex items-center justify-between gap-6 py-2">
+          <div className="flex items-center gap-3 min-w-0">
+            {!isHome && (
+              <button
+                type="button"
+                onClick={handleBack}
+                className="hidden sm:flex h-8 px-3 rounded-full border border-neutral-200 items-center gap-2 text-xs font-bold text-brand-700 hover:bg-brand-50 transition-colors"
+                aria-label="Voltar para a página anterior"
+              >
+                <ArrowLeftIcon />
+                Voltar
+              </button>
+            )}
+
             <button
               type="button"
-              className="w-8 h-8 flex items-center justify-center text-brand-700"
+              className="w-8 h-8 flex items-center justify-center text-brand-700 shrink-0"
               onClick={() => setMenuOpen((v) => !v)}
               aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
               aria-expanded={menuOpen}
@@ -100,19 +261,40 @@ export function Header() {
               {menuOpen ? <CloseIcon /> : <MenuIcon />}
             </button>
 
-            <Link href="/" className="flex flex-col leading-tight no-underline">
-              <span className="font-poppins text-[20px] font-normal text-neutral-900">
-                Conecta Sus+
+            <Link
+              href="/"
+              className="flex flex-col leading-tight no-underline min-w-0"
+            >
+              <span className="font-poppins text-[20px] font-normal text-neutral-900 truncate">
+                {pageInfo.title}
               </span>
-              <span className="text-[12px] text-neutral-400">
-                Agendamento de consultas
+              <span className="text-[12px] text-neutral-400 truncate">
+                {pageInfo.subtitle}
               </span>
             </Link>
           </div>
 
-          {/* Busca */}
-          <div className="hidden md:flex flex-1 justify-end">
-            <div className="relative w-full max-w-[340px]">
+          <nav
+            className="hidden lg:flex items-center gap-1"
+            aria-label="Menu principal"
+          >
+            {menuLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`px-3 py-2 rounded-full text-xs font-bold no-underline transition-colors ${
+                  isActiveLink(link.href)
+                    ? "bg-brand-700 text-white"
+                    : "text-brand-700 hover:bg-brand-50"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="hidden md:flex flex-1 justify-end max-w-[340px]">
+            <div className="relative w-full">
               <input
                 type="search"
                 placeholder="O que você procura?"
@@ -135,46 +317,38 @@ export function Header() {
       {/* Menu aberto */}
       {menuOpen && (
         <nav className="bg-white border-b border-neutral-100">
-          <ul className="container-app flex flex-col md:flex-row md:gap-8 py-3">
-            <li>
-              <Link
-                href="/"
-                onClick={() => setMenuOpen(false)}
-                className="block py-2 text-sm text-neutral-700 no-underline hover:text-brand-700"
-              >
-                Início
-              </Link>
-            </li>
+          <ul className="container-app flex flex-col md:flex-row md:gap-3 py-3">
+            {!isHome && (
+              <li className="md:hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    handleBack();
+                  }}
+                  className="w-full text-left flex items-center gap-2 py-2 text-sm font-bold text-brand-700"
+                >
+                  <ArrowLeftIcon />
+                  Voltar
+                </button>
+              </li>
+            )}
 
-            <li>
-              <Link
-                href="/agendamento/especialidade"
-                onClick={() => setMenuOpen(false)}
-                className="block py-2 text-sm text-neutral-700 no-underline hover:text-brand-700"
-              >
-                Agendar Consulta
-              </Link>
-            </li>
-
-            <li>
-              <Link
-                href="/dashboard"
-                onClick={() => setMenuOpen(false)}
-                className="block py-2 text-sm text-neutral-700 no-underline hover:text-brand-700"
-              >
-                Meus Agendamentos
-              </Link>
-            </li>
-
-            <li>
-              <Link
-                href={medicoHref}
-                onClick={() => setMenuOpen(false)}
-                className="block py-2 text-sm text-neutral-700 no-underline hover:text-brand-700"
-              >
-                Área do médico
-              </Link>
-            </li>
+            {menuLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`block py-2 px-3 rounded-full text-sm no-underline transition-colors ${
+                    isActiveLink(link.href)
+                      ? "bg-brand-700 text-white font-bold"
+                      : "text-neutral-700 hover:text-brand-700 hover:bg-brand-50"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </nav>
       )}
@@ -197,6 +371,24 @@ function HeaderIconButton({
     >
       {children}
     </button>
+  );
+}
+
+function ArrowLeftIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
   );
 }
 
