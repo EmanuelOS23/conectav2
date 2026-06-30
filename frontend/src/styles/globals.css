@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Lato:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Variables — Design Tokens do Figma ─────────────── */
+:root {
+  --color-primary:     #1351B4;
+  --color-primary-dark:#022A69;
+  --color-primary-mid: #254983;
+  --color-accent:      #317EDF;
+  --color-bg:          #F8F8F8;
+  --color-white:       #FFFFFF;
+  --color-text:        #333333;
+  --color-text-light:  #555555;
+  --color-muted:       #888888;
+  --color-border:      #CCCCCC;
+  --color-success:     #1A7A4A;
+  --color-error:       #CC0000;
+  --color-warning:     #F5A623;
+
+  --font-size-base: 1rem;
+  --radius-input:   4px;
+  --radius-card:    8px;
+  --radius-pill:    57px;
+  --shadow-header:  0px 1px 6px rgba(0,0,0,0.16);
+  --shadow-card:    0px 2px 8px rgba(0,0,0,0.12);
+  --shadow-modal:   6px 13px 33.6px rgba(0,0,0,0.25);
+}
+
+/* ── Alto Contraste ─────────────────────────────────────── */
+.high-contrast {
+  --color-primary:     #000000;
+  --color-primary-dark:#000000;
+  --color-bg:          #FFFFFF;
+  --color-text:        #000000;
+  --color-border:      #000000;
+}
+.high-contrast * {
+  border-color: #000 !important;
+}
+
+/* ── Tamanho de Fonte dinâmico ──────────────────────────── */
+html[data-font-size="pequeno"]      { font-size: 14px; }
+html[data-font-size="normal"]       { font-size: 16px; }
+html[data-font-size="grande"]       { font-size: 19px; }
+html[data-font-size="muito-grande"] { font-size: 22px; }
+
+/* ── Reduzir animações ──────────────────────────────────── */
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* ── Base reset + acessibilidade ────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    @apply bg-neutral-50 text-neutral-700 font-rawline antialiased;
+    font-size: var(--font-size-base);
+  }
+
+  /* Foco visível para teclado */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-700 rounded;
+  }
+
+  h1, h2, h3, h4, h5, h6 { @apply font-poppins font-bold; }
+
+  a { @apply text-brand-700 hover:text-brand-800 underline-offset-2; }
+
+  img { @apply max-w-full; }
+}
+
+/* ── Utilitários custom ─────────────────────────────────── */
+@layer utilities {
+  .font-rawline { font-family: 'Rawline', 'Segoe UI', sans-serif; }
+  .font-poppins { font-family: 'Poppins', sans-serif; }
+  .font-lato    { font-family: 'Lato', sans-serif; }
+
+  .container-app {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0);
+    white-space: nowrap; border-width: 0;
+  }
+}
